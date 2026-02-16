@@ -4,17 +4,14 @@ from tensorflow.keras.applications.efficientnet import preprocess_input as effic
 
 IMG_SIZE = 224
 
-
 def load_dataframe(csv_path):
     return pd.read_csv(csv_path)
-
 
 def _decode_image(path):
     img = tf.io.read_file(path)
     img = tf.image.decode_jpeg(img, channels=1)
     img = tf.image.resize_with_pad(img, IMG_SIZE, IMG_SIZE)
     return img
-
 
 # ========================
 # BASELINE PREPROCESS

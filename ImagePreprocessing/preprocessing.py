@@ -114,7 +114,11 @@ def prepare_data(
 
     full_df = pd.concat([train_df, val_df, test_df], ignore_index=True)
 
-    csv_path = data_path / "dataset.csv"
+    # ==========================
+    # SALVAR CSV EM data/
+    # ==========================
+
+    csv_path = data_path.parent / "dataset.csv"
     full_df.to_csv(csv_path, index=False)
 
     return full_df, csv_path
