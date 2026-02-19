@@ -14,7 +14,6 @@ from typing import Callable, Optional, Tuple
 def _is_conv_like(layer: tf.keras.layers.Layer) -> bool:
     """
     Considera como 'conv-like' apenas camadas convolucionais de verdade.
-    (Não usa mais o truque de rank 4 para não cair em top_activation.)
     """
     conv_types = (
         tf.keras.layers.Conv2D,
@@ -45,23 +44,6 @@ def find_last_conv_layer(model: tf.keras.Model) -> tf.keras.layers.Layer:
     )
 
 
-def _get_layer_recursive(model: tf.keras.Model, name: str) -> tf.keras.layers.Layer:
-    """
-    Procura uma camada por nome dentro do modelo, incluindo submodelos aninhados.
-    Permite, por exemplo, achar 'top_conv' dentro de 'efficientnetb0'.
-    """
-    for layer in model.layers:
-        if layer.name == name:
-            return layer
-        if isinstance(layer, tf.keras.Model):
-            try:
-                return _get_layer_recursive(layer, name)
-            except ValueError:
-                # Se não estiver nesse submodelo, continua procurando em outros
-                pass
-    raise ValueError(f"No such layer: {name}")
-
-
 # -----------------------------------------------------------------------------
 # 2. Carregamento e pré-processamento de imagem
 # -----------------------------------------------------------------------------
@@ -75,8 +57,6 @@ def load_image_for_gradcam(
 
     - original_img: imagem em [0,1], formato (H, W, 3), apenas para visualização;
     - input_tensor: tensor (1, img_size, img_size, 3), pronto para o modelo.
-
-    Por padrão, usa tf.keras.applications.efficientnet.preprocess_input.
     """
     img_path = Path(img_path)
     if preprocess_fn is None:
@@ -109,31 +89,13 @@ def make_gradcam_heatmap(
 ) -> np.ndarray:
     """
     Gera o heatmap Grad-CAM para um único exemplo (batch size = 1).
-
-    Parâmetros
-    ----------
-    input_tensor:
-        Tensor de entrada no formato (1, H, W, 3), já pré-processado.
-    model:
-        Modelo Keras já carregado (por exemplo, best_model.keras).
-    last_conv_layer_name:
-        Nome da camada convolucional final a ser usada para Grad-CAM.
-        Se None, é detectada automaticamente com find_last_conv_layer.
-    class_index:
-        Índice da classe alvo para o Grad-CAM.
-        - Binário (Dense(1, sigmoid)): use 0.
-        - Multiclasse (Dense(C, softmax)): pode ser None para usar argmax.
-
-    Retorno
-    -------
-    heatmap: np.ndarray, shape (H_feat, W_feat), com valores em [0, 1].
     """
     # Decide qual camada convolucional usar
     if last_conv_layer_name is None:
         last_conv_layer = find_last_conv_layer(model)
     else:
-        # Busca recursiva: funciona mesmo se a camada estiver dentro de submodelo
-        last_conv_layer = _get_layer_recursive(model, last_conv_layer_name)
+        # Aqui assumimos que last_conv_layer_name se refere à camada certa
+        last_conv_layer = model.get_layer(last_conv_layer_name)
 
     # Modelo que mapeia input -> (feature maps da última conv, saída final)
     grad_model = tf.keras.models.Model(
@@ -186,21 +148,6 @@ def overlay_gradcam(
 ) -> np.ndarray:
     """
     Faz o overlay do heatmap Grad-CAM sobre a imagem original.
-
-    Parâmetros
-    ----------
-    original_image:
-        np.ndarray (H, W, 3) em [0, 1], como retornado por load_image_for_gradcam.
-    heatmap:
-        np.ndarray (H_feat, W_feat) em [0, 1].
-    alpha:
-        Peso do heatmap. Valores mais altos destacam mais o mapa de calor.
-    cmap:
-        Colormap Matplotlib (ex.: "jet", "viridis").
-
-    Retorno
-    -------
-    superimposed_img: np.ndarray (H, W, 3) em [0, 1].
     """
     import matplotlib.cm as cm
 
