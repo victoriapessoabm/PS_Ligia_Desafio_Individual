@@ -16,11 +16,9 @@ def load_image_for_model(
     img_raw = tf.io.read_file(img_path)
     img = tf.image.decode_jpeg(img_raw, channels=3)
 
-    # redimensiona
     img_resized = tf.image.resize(img, target_size)
     original_image = tf.cast(tf.clip_by_value(img_resized, 0, 255), tf.uint8).numpy()
 
-    # prepara para o modelo
     img_float = tf.cast(img_resized, tf.float32)
     if preprocess_fn is not None:
         img_float = preprocess_fn(img_float)
@@ -31,40 +29,29 @@ def load_image_for_model(
     return original_image, input_tensor
 
 
-# Acha automaticamente a última camada conv (4D) no modelo principal
+# Acha automaticamente a última camada com saída 4D (já olhando camadas aninhadas)
 def find_last_conv_layer_name(model: tf.keras.Model) -> str:
-    for layer in reversed(model.layers):
+    last_name = None
+    for layer in model._flatten_layers(include_self=False):
         try:
             shape = layer.output_shape  # type: ignore[attr-defined]
         except AttributeError:
             continue
 
         if isinstance(shape, tuple) and len(shape) == 4:
-            return layer.name
+            last_name = layer.name
 
-    raise ValueError("Nenhuma camada convolucional 4D foi encontrada no modelo.")
+    if last_name is None:
+        raise ValueError("Nenhuma camada convolucional 4D foi encontrada no modelo.")
+
+    return last_name
 
 
-# Procura uma camada pelo nome no modelo e em submodelos
-def _get_conv_layer(model: tf.keras.Model, layer_name: str):
-    """
-    Procura a camada pelo nome, primeiro no modelo principal
-    e depois dentro de submodelos (ex.: efficientnetb0).
-    """
-    # tenta direto no modelo principal
-    try:
-        return model.get_layer(layer_name)
-    except ValueError:
-        pass
-
-    # se não encontrar, varre submodelos
-    for layer in model.layers:
-        if isinstance(layer, tf.keras.Model):
-            try:
-                return layer.get_layer(layer_name)
-            except ValueError:
-                continue
-
+# Procura camada pelo nome usando o grafo “flattened”
+def _get_layer_by_name(model: tf.keras.Model, layer_name: str):
+    for layer in model._flatten_layers(include_self=False):
+        if layer.name == layer_name:
+            return layer
     raise ValueError(f"Camada '{layer_name}' não encontrada no modelo.")
 
 
@@ -78,18 +65,17 @@ def compute_gradcam_heatmap(
     if last_conv_layer_name is None:
         last_conv_layer_name = find_last_conv_layer_name(model)
 
-    # pega a camada conv (suporta submodelo, ex.: efficientnetb0.top_conv)
-    last_conv_layer = _get_conv_layer(model, last_conv_layer_name)
+    target_layer = _get_layer_by_name(model, last_conv_layer_name)
 
     grad_model = Model(
         inputs=model.inputs,
-        outputs=[last_conv_layer.output, model.output],
+        outputs=[target_layer.output, model.output],
     )
 
     with tf.GradientTape() as tape:
         conv_outputs, preds = grad_model(input_tensor, training=False)
 
-        # binário (shape [..., 1]) → índice 0
+        # binário ([..., 1]) → índice 0; caso multi-classe, usa argmax
         if class_index is None:
             if preds.shape[-1] == 1:
                 class_index = 0
@@ -99,13 +85,11 @@ def compute_gradcam_heatmap(
         class_channel = preds[:, class_index]
         grads = tape.gradient(class_channel, conv_outputs)
 
-    # média dos gradientes em HxW
     pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
 
     conv_outputs = conv_outputs[0]  # (H, W, C)
     heatmap = tf.zeros(conv_outputs.shape[0:2], dtype=tf.float32)
 
-    # combinação linear dos mapas de ativação
     for i in range(conv_outputs.shape[-1]):
         heatmap += pooled_grads[i] * conv_outputs[:, :, i]
 
@@ -118,7 +102,7 @@ def compute_gradcam_heatmap(
     return heatmap.numpy()
 
 
-# Gera a imagem com o heatmap sobreposto
+# Sobrepõe o heatmap na imagem original
 def superimpose_heatmap(
     original_image: np.ndarray,
     heatmap: np.ndarray,
