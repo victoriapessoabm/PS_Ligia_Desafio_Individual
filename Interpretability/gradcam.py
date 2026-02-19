@@ -31,7 +31,7 @@ def load_image_for_model(
     return original_image, input_tensor
 
 
-# Acha automaticamente a última camada conv (4D)
+# Acha automaticamente a última camada conv (4D) no modelo principal
 def find_last_conv_layer_name(model: tf.keras.Model) -> str:
     for layer in reversed(model.layers):
         try:
@@ -39,10 +39,33 @@ def find_last_conv_layer_name(model: tf.keras.Model) -> str:
         except AttributeError:
             continue
 
-        if len(shape) == 4:
+        if isinstance(shape, tuple) and len(shape) == 4:
             return layer.name
 
     raise ValueError("Nenhuma camada convolucional 4D foi encontrada no modelo.")
+
+
+# Procura uma camada pelo nome no modelo e em submodelos
+def _get_conv_layer(model: tf.keras.Model, layer_name: str):
+    """
+    Procura a camada pelo nome, primeiro no modelo principal
+    e depois dentro de submodelos (ex.: efficientnetb0).
+    """
+    # tenta direto no modelo principal
+    try:
+        return model.get_layer(layer_name)
+    except ValueError:
+        pass
+
+    # se não encontrar, varre submodelos
+    for layer in model.layers:
+        if isinstance(layer, tf.keras.Model):
+            try:
+                return layer.get_layer(layer_name)
+            except ValueError:
+                continue
+
+    raise ValueError(f"Camada '{layer_name}' não encontrada no modelo.")
 
 
 # Calcula o heatmap Grad-CAM para uma imagem (batch 1)
@@ -55,7 +78,9 @@ def compute_gradcam_heatmap(
     if last_conv_layer_name is None:
         last_conv_layer_name = find_last_conv_layer_name(model)
 
-    last_conv_layer = model.get_layer(last_conv_layer_name)
+    # pega a camada conv (suporta submodelo, ex.: efficientnetb0.top_conv)
+    last_conv_layer = _get_conv_layer(model, last_conv_layer_name)
+
     grad_model = Model(
         inputs=model.inputs,
         outputs=[last_conv_layer.output, model.output],
@@ -64,7 +89,7 @@ def compute_gradcam_heatmap(
     with tf.GradientTape() as tape:
         conv_outputs, preds = grad_model(input_tensor, training=False)
 
-        # para binário (shape [..., 1]) usa índice 0
+        # binário (shape [..., 1]) → índice 0
         if class_index is None:
             if preds.shape[-1] == 1:
                 class_index = 0
