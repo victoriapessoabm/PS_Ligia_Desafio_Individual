@@ -17,9 +17,9 @@ def load_image_for_gradcam(
     preprocess_fn: Optional[Callable[[tf.Tensor], tf.Tensor]] = None,
 ) -> Tuple[np.ndarray, tf.Tensor]:
     """
-    Carrega uma imagem de disco e prepara:
-      - original_img: np.ndarray (H, W, 3) em [0,1], para visualização;
-      - input_tensor: tf.Tensor (1, img_size, img_size, 3), pronto pro modelo.
+    Carrega uma imagem e prepara:
+      - original_img: np.ndarray (H, W, 3) em [0,1], só para visualização;
+      - input_tensor: tf.Tensor (1, img_size, img_size, 3), pronto para o modelo.
     """
     img_path = Path(img_path)
     if preprocess_fn is None:
@@ -40,7 +40,7 @@ def load_image_for_gradcam(
 
 
 # -----------------------------------------------------------------------------
-# 2. Grad-CAM para o SEU modelo (EfficientNetB0 + GAP + Dropout + Dense)
+# 2. Grad-CAM específico para SEU modelo
 # -----------------------------------------------------------------------------
 def make_gradcam_heatmap(
     input_tensor: tf.Tensor,
@@ -48,7 +48,7 @@ def make_gradcam_heatmap(
     class_index: Optional[int] = None,
 ) -> np.ndarray:
     """
-    Implementação de Grad-CAM específica para o modelo:
+    Grad-CAM para o modelo:
 
         input_layer_1
           -> efficientnetb0
@@ -56,10 +56,9 @@ def make_gradcam_heatmap(
           -> dropout
           -> dense
 
-    Dentro do efficientnetb0, usa-se a camada 'top_conv' como última conv.
+    Usa a camada 'top_conv' dentro de efficientnetb0 como última conv.
     """
-
-    # Backbone EfficientNet
+    # Backbone EfficientNet (submodelo)
     backbone = model.get_layer("efficientnetb0")
     last_conv_layer = backbone.get_layer("top_conv")          # Conv2D
     top_bn          = backbone.get_layer("top_bn")
@@ -72,7 +71,7 @@ def make_gradcam_heatmap(
     # 1) Modelo da entrada até a top_conv
     conv_model = tf.keras.Model(model.inputs, last_conv_layer.output)
 
-    # 2) "Cabeça" do modelo: top_bn -> top_activation -> GAP -> dropout -> dense
+    # 2) "Cabeça" a partir de top_conv até a saída final
     classifier_input = tf.keras.Input(shape=last_conv_layer.output.shape[1:])
     x = classifier_input
     x = top_bn(x)
@@ -100,9 +99,9 @@ def make_gradcam_heatmap(
         grads = tape.gradient(class_channel, conv_outputs)
 
     # 4) Ponderação dos feature maps pelos gradientes médios
-    pooled_grads = tf.reduce_mean(grads, axis=(1, 2))  # (1, C)
-    conv_outputs = conv_outputs[0]                     # (H_feat, W_feat, C)
-    pooled_grads = pooled_grads[0]                     # (C,)
+    pooled_grads = tf.reduce_mean(grads, axis=(1, 2))
+    conv_outputs = conv_outputs[0]
+    pooled_grads = pooled_grads[0]
 
     conv_outputs = conv_outputs * pooled_grads
     heatmap = tf.reduce_sum(conv_outputs, axis=-1)
@@ -124,7 +123,7 @@ def overlay_gradcam(
     cmap: str = "jet",
 ) -> np.ndarray:
     """
-    Combina o heatmap Grad-CAM com a imagem original.
+    Faz o overlay do heatmap Grad-CAM na imagem original.
     """
     import matplotlib.cm as cm
 
@@ -144,7 +143,7 @@ def overlay_gradcam(
 
 
 # -----------------------------------------------------------------------------
-# 4. Plotagem do resultado
+# 4. Plot do resultado
 # -----------------------------------------------------------------------------
 def plot_gradcam_result(
     original_image: np.ndarray,
@@ -154,12 +153,6 @@ def plot_gradcam_result(
     prob: Optional[float] = None,
     true_label: Optional[str] = None,
 ):
-    """
-    Plota:
-      - imagem original,
-      - heatmap,
-      - overlay.
-    """
     plt.figure(figsize=(10, 3))
 
     plt.subplot(1, 3, 1)
@@ -181,10 +174,9 @@ def plot_gradcam_result(
         subtitle_parts.append(f"rótulo real: {true_label}")
     if prob is not None:
         subtitle_parts.append(f"p(modelo=1)={prob:.3f}")
-
     subtitle = " | ".join(subtitle_parts)
-    final_title = title if not subtitle else f"{title}\n{subtitle}" if title else subtitle
 
+    final_title = title if not subtitle else f"{title}\n{subtitle}" if title else subtitle
     plt.title(final_title, fontsize=9)
     plt.tight_layout()
     plt.show()
