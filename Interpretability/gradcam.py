@@ -40,7 +40,7 @@ def load_image_for_gradcam(
 
 
 # -----------------------------------------------------------------------------
-# 2. Grad-CAM específico para SEU modelo
+# 2. Grad-CAM usando a saída do layer "efficientnetb0"
 # -----------------------------------------------------------------------------
 def make_gradcam_heatmap(
     input_tensor: tf.Tensor,
@@ -51,43 +51,29 @@ def make_gradcam_heatmap(
     Grad-CAM para o modelo:
 
         input_layer_1
-          -> efficientnetb0
+          -> efficientnetb0          (saída: feature map 7x7x1280, chamada top_activation)
           -> global_average_pooling2d
           -> dropout
           -> dense
 
-    Usa a camada 'top_conv' dentro de efficientnetb0 como última conv.
+    Usa-se a SAÍDA do layer "efficientnetb0" como feature map para Grad-CAM.
+    Isso evita misturar grafos internos do backbone com o grafo externo.
     """
-    # Backbone EfficientNet (submodelo)
-    backbone = model.get_layer("efficientnetb0")
-    last_conv_layer = backbone.get_layer("top_conv")          # Conv2D
-    top_bn          = backbone.get_layer("top_bn")
-    top_activation  = backbone.get_layer("top_activation")
 
-    gap   = model.get_layer("global_average_pooling2d")
-    drop  = model.get_layer("dropout")
-    dense = model.get_layer("dense")
+    # Camada de feature map (já está no grafo principal do modelo)
+    feature_layer = model.get_layer("efficientnetb0")
 
-    # 1) Modelo da entrada até a top_conv
-    conv_model = tf.keras.Model(model.inputs, last_conv_layer.output)
+    # grad_model: entrada -> (feature maps, saída final)
+    grad_model = tf.keras.Model(
+        inputs=model.inputs,
+        outputs=[feature_layer.output, model.output],
+    )
 
-    # 2) "Cabeça" a partir de top_conv até a saída final
-    classifier_input = tf.keras.Input(shape=last_conv_layer.output.shape[1:])
-    x = classifier_input
-    x = top_bn(x)
-    x = top_activation(x)
-    x = gap(x)
-    x = drop(x)
-    x = dense(x)
-    classifier_model = tf.keras.Model(classifier_input, x)
-
-    # 3) Cálculo dos gradientes
     with tf.GradientTape() as tape:
-        conv_outputs = conv_model(input_tensor)
-        tape.watch(conv_outputs)
+        # Faz forward uma vez
+        conv_outputs, predictions = grad_model(input_tensor, training=False)
 
-        predictions = classifier_model(conv_outputs)
-
+        # Escolhe a saída alvo
         if class_index is None:
             if predictions.shape[-1] == 1:
                 class_channel = predictions[:, 0]
@@ -96,15 +82,18 @@ def make_gradcam_heatmap(
         else:
             class_channel = predictions[:, class_index]
 
+        # Gradientes da saída alvo em relação às ativações da feature_layer
         grads = tape.gradient(class_channel, conv_outputs)
 
-    # 4) Ponderação dos feature maps pelos gradientes médios
-    pooled_grads = tf.reduce_mean(grads, axis=(1, 2))
-    conv_outputs = conv_outputs[0]
-    pooled_grads = pooled_grads[0]
+    # Média espacial dos gradientes
+    pooled_grads = tf.reduce_mean(grads, axis=(1, 2))  # (1, C)
+    conv_outputs = conv_outputs[0]                     # (H_feat, W_feat, C)
+    pooled_grads = pooled_grads[0]                     # (C,)
 
+    # Pondera cada canal pela importância
     conv_outputs = conv_outputs * pooled_grads
-    heatmap = tf.reduce_sum(conv_outputs, axis=-1)
+
+    heatmap = tf.reduce_sum(conv_outputs, axis=-1)     # (H_feat, W_feat)
     heatmap = tf.nn.relu(heatmap)
 
     max_val = tf.reduce_max(heatmap)
