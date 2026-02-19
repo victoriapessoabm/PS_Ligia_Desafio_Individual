@@ -7,20 +7,21 @@ import tensorflow as tf
 from tensorflow.keras.models import Model
 
 
-# Carrega e prepara uma imagem para o modelo
 def load_image_for_model(
     img_path: str,
     target_size: Tuple[int, int] = (224, 224),
     preprocess_fn: Optional[Callable[[np.ndarray], np.ndarray]] = None,
 ) -> Tuple[np.ndarray, tf.Tensor]:
+    """
+    Carrega a imagem do disco, redimensiona e aplica o pré-processamento.
+    Retorna (imagem_original_uint8, tensor_pronto_para_modelo).
+    """
     img_raw = tf.io.read_file(img_path)
     img = tf.image.decode_jpeg(img_raw, channels=3)
 
-    # redimensiona
     img_resized = tf.image.resize(img, target_size)
     original_image = tf.cast(tf.clip_by_value(img_resized, 0, 255), tf.uint8).numpy()
 
-    # prepara para o modelo
     img_float = tf.cast(img_resized, tf.float32)
     if preprocess_fn is not None:
         img_float = preprocess_fn(img_float)
@@ -31,7 +32,6 @@ def load_image_for_model(
     return original_image, input_tensor
 
 
-# Acha automaticamente a última camada com saída 4D olhando a rede "achatada"
 def find_last_conv_layer_name(model: tf.keras.Model) -> str:
     """
     Percorre todas as camadas do grafo (incluindo submodelos) e devolve
@@ -53,15 +53,16 @@ def find_last_conv_layer_name(model: tf.keras.Model) -> str:
     return last_name
 
 
-# Procura camada pelo nome no grafo achatado
 def _get_layer_by_name(model: tf.keras.Model, layer_name: str):
+    """
+    Procura camada pelo nome no grafo achatado.
+    """
     for layer in model._flatten_layers(include_self=False):
         if layer.name == layer_name:
             return layer
     raise ValueError(f"Camada '{layer_name}' não encontrada no modelo.")
 
 
-# Calcula o heatmap Grad-CAM para uma imagem (batch 1)
 def compute_gradcam_heatmap(
     model: tf.keras.Model,
     input_tensor: tf.Tensor,
@@ -71,30 +72,42 @@ def compute_gradcam_heatmap(
     """
     Calcula o heatmap Grad-CAM usando a última camada conv 4D do modelo
     (ou uma camada específica, se last_conv_layer_name for fornecido).
+    Implementação usando DOIS modelos dentro do mesmo GradientTape
+    para evitar problemas de grafo.
     """
+    # escolhe camada alvo
     if last_conv_layer_name is None:
         last_conv_layer_name = find_last_conv_layer_name(model)
 
     target_layer = _get_layer_by_name(model, last_conv_layer_name)
 
-    grad_model = Model(
+    # modelo que devolve o mapa da conv
+    conv_model = Model(
         inputs=model.inputs,
-        outputs=[target_layer.output, model.output],
+        outputs=target_layer.output,
     )
 
-    with tf.GradientTape() as tape:
-        conv_outputs, preds = grad_model(input_tensor, training=False)
+    # modelo completo para a predição final
+    pred_model = model  # só para deixar explícito
 
-        # Para modelo binário ([..., 1]) uso índice 0; multi-classe → argmax
+    with tf.GradientTape() as tape:
+        # ambos são chamados dentro do mesmo tape
+        conv_outputs = conv_model(input_tensor, training=False)   # (1, H, W, C)
+        preds = pred_model(input_tensor, training=False)          # (1, num_classes ou 1)
+
+        # binário: shape [..., 1] → índice 0; senão, argmax
         if class_index is None:
             if preds.shape[-1] == 1:
-                class_index = 0
+                class_index_used = 0
             else:
-                class_index = int(tf.argmax(preds[0]))
+                class_index_used = int(tf.argmax(preds[0]))
+        else:
+            class_index_used = class_index
 
-        class_channel = preds[:, class_index]
+        class_channel = preds[:, class_index_used]
         grads = tape.gradient(class_channel, conv_outputs)
 
+    # média dos gradientes em HxW
     pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
     conv_outputs = conv_outputs[0]  # (H, W, C)
 
@@ -111,12 +124,14 @@ def compute_gradcam_heatmap(
     return heatmap.numpy()
 
 
-# Sobrepõe o heatmap na imagem original
 def superimpose_heatmap(
     original_image: np.ndarray,
     heatmap: np.ndarray,
     alpha: float = 0.4,
 ) -> np.ndarray:
+    """
+    Sobrepõe o heatmap na imagem original.
+    """
     import matplotlib.cm as cm
 
     if original_image.dtype != np.uint8:
@@ -135,7 +150,6 @@ def superimpose_heatmap(
     return overlay
 
 
-# Função principal: carrega, calcula Grad-CAM e devolve tudo
 def run_gradcam_on_image(
     model: tf.keras.Model,
     img_path: str,
