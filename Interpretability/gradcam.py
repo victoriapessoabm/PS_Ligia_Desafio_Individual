@@ -40,7 +40,7 @@ def find_last_conv_layer(model: tf.keras.Model) -> tf.keras.layers.Layer:
 
     raise ValueError(
         "Não foi possível encontrar uma camada convolucional adequada "
-        "para Grad-CAM. Considere passar manualmente o nome da camada."
+        "para Grad-CAM. Considere passar manualmente a camada."
     )
 
 
@@ -89,48 +89,80 @@ def make_gradcam_heatmap(
 ) -> np.ndarray:
     """
     Gera o heatmap Grad-CAM para um único exemplo (batch size = 1).
+
+    Implementação específica para o modelo:
+
+        input_layer_1
+          -> efficientnetb0
+          -> global_average_pooling2d
+          -> dropout
+          -> dense
+
+    Dentro do efficientnetb0, a última conv é a `top_conv`, seguida de:
+        top_bn -> top_activation
+
+    A cadeia exata usada aqui é:
+        input -> ... -> top_conv -> top_bn -> top_activation
+        -> global_average_pooling2d -> dropout -> dense
     """
-    # Decide qual camada convolucional usar
-    if last_conv_layer_name is None:
-        last_conv_layer = find_last_conv_layer(model)
-    else:
-        # Aqui assumimos que last_conv_layer_name se refere à camada certa
-        last_conv_layer = model.get_layer(last_conv_layer_name)
 
-    # Modelo que mapeia input -> (feature maps da última conv, saída final)
-    grad_model = tf.keras.models.Model(
-        [model.inputs],
-        [last_conv_layer.output, model.output],
-    )
+    # 1) Descobre a última camada conv (no seu caso, top_conv)
+    last_conv_layer = find_last_conv_layer(model)  # deve ser 'top_conv'
 
+    # 2) Modelo que vai da entrada até a última camada conv
+    conv_model = tf.keras.Model(model.inputs, last_conv_layer.output)
+
+    # 3) Monta o "classificador" a partir de top_conv até a saída final
+    #    usando as camadas já existentes (pesos compartilhados).
+    backbone = model.get_layer("efficientnetb0")
+    top_bn = backbone.get_layer("top_bn")
+    top_activation = backbone.get_layer("top_activation")
+
+    gap = model.get_layer("global_average_pooling2d")
+    drop = model.get_layer("dropout")
+    dense = model.get_layer("dense")
+
+    classifier_input = tf.keras.Input(shape=last_conv_layer.output.shape[1:])
+    x = classifier_input
+    x = top_bn(x)
+    x = top_activation(x)
+    x = gap(x)
+    x = drop(x)
+    x = dense(x)
+    classifier_model = tf.keras.Model(classifier_input, x)
+
+    # 4) Grad-CAM propriamente dito
     with tf.GradientTape() as tape:
-        conv_outputs, predictions = grad_model(input_tensor)
-        # predictions tem shape (1, 1) ou (1, C)
+        # Feature maps da última conv
+        conv_outputs = conv_model(input_tensor)
+        tape.watch(conv_outputs)
+
+        # Predição final passando pelos "restantes" do modelo
+        predictions = classifier_model(conv_outputs)
+
+        # Saída alvo
         if class_index is None:
             if predictions.shape[-1] == 1:
-                # Caso binário: usar a única saída
                 class_channel = predictions[:, 0]
             else:
-                # Multiclasse: usa classe com maior probabilidade
                 class_channel = tf.reduce_max(predictions, axis=-1)
         else:
             class_channel = predictions[:, class_index]
 
-        # Gradientes da classe alvo em relação às ativações da última conv
+        # Gradientes da saída alvo em relação às ativações da última conv
         grads = tape.gradient(class_channel, conv_outputs)
 
-    # Média espacial dos gradientes (importância de cada filtro)
+    # 5) Pooling dos gradientes e combinação linear dos feature maps
     pooled_grads = tf.reduce_mean(grads, axis=(1, 2))  # (1, C)
     conv_outputs = conv_outputs[0]  # (H_feat, W_feat, C)
     pooled_grads = pooled_grads[0]  # (C,)
 
-    # Combinação linear dos mapas de ativação ponderados pelos gradientes
     conv_outputs = conv_outputs * pooled_grads
 
     heatmap = tf.reduce_sum(conv_outputs, axis=-1)  # (H_feat, W_feat)
     heatmap = tf.nn.relu(heatmap)
 
-    # Normaliza para [0, 1]
+    # 6) Normaliza para [0, 1]
     max_val = tf.reduce_max(heatmap)
     heatmap = tf.where(max_val > 0, heatmap / max_val, tf.zeros_like(heatmap))
 
