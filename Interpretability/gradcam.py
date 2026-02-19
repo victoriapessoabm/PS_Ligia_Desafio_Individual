@@ -9,21 +9,28 @@ from typing import Callable, Optional, Tuple
 
 
 # -----------------------------------------------------------------------------
-# 1. Utilitário: encontrar automaticamente a última camada convolucional
+# 0. Helpers de detecção de camadas
 # -----------------------------------------------------------------------------
+def _is_conv_like(layer: tf.keras.layers.Layer) -> bool:
+    """
+    Considera como 'conv-like' apenas camadas convolucionais de verdade.
+    (Não usa mais o truque de rank 4 para não cair em top_activation.)
+    """
+    conv_types = (
+        tf.keras.layers.Conv2D,
+        tf.keras.layers.SeparableConv2D,
+        tf.keras.layers.DepthwiseConv2D,
+    )
+    return isinstance(layer, conv_types)
+
+
 def find_last_conv_layer(model: tf.keras.Model) -> tf.keras.layers.Layer:
     """
-    Tenta encontrar a última camada 'convolucional' do modelo.
-    Serve para modelos como EfficientNet salvos em .keras.
-
-    Estratégia:
-    - Percorre as camadas em ordem reversa;
-    - Procura por camadas Conv2D, SeparableConv2D, DepthwiseConv2D ou
-      camadas cujo output tenha rank 4 (feature map 2D).
+    Procura, em ordem reversa, a última camada convolucional do modelo,
+    incluindo convoluções que estejam dentro de submodelos (como EfficientNet).
     """
-    # Procura em camadas "rasas"
     for layer in reversed(model.layers):
-        # Se for um submodelo (como a EfficientNet embutida), pode ter convs dentro
+        # Se for um submodelo (ex.: efficientnetb0), varre as camadas internas
         if isinstance(layer, tf.keras.Model) and hasattr(layer, "layers"):
             for sub_layer in reversed(layer.layers):
                 if _is_conv_like(sub_layer):
@@ -38,24 +45,21 @@ def find_last_conv_layer(model: tf.keras.Model) -> tf.keras.layers.Layer:
     )
 
 
-def _is_conv_like(layer: tf.keras.layers.Layer) -> bool:
-    conv_types = (
-        tf.keras.layers.Conv2D,
-        tf.keras.layers.SeparableConv2D,
-        tf.keras.layers.DepthwiseConv2D,
-    )
-    if isinstance(layer, conv_types):
-        return True
-
-    # Fallback: qualquer camada com output rank 4 (batch, h, w, c)
-    try:
-        output = layer.output
-        if len(output.shape) == 4:
-            return True
-    except Exception:
-        pass
-
-    return False
+def _get_layer_recursive(model: tf.keras.Model, name: str) -> tf.keras.layers.Layer:
+    """
+    Procura uma camada por nome dentro do modelo, incluindo submodelos aninhados.
+    Permite, por exemplo, achar 'top_conv' dentro de 'efficientnetb0'.
+    """
+    for layer in model.layers:
+        if layer.name == name:
+            return layer
+        if isinstance(layer, tf.keras.Model):
+            try:
+                return _get_layer_recursive(layer, name)
+            except ValueError:
+                # Se não estiver nesse submodelo, continua procurando em outros
+                pass
+    raise ValueError(f"No such layer: {name}")
 
 
 # -----------------------------------------------------------------------------
@@ -72,8 +76,7 @@ def load_image_for_gradcam(
     - original_img: imagem em [0,1], formato (H, W, 3), apenas para visualização;
     - input_tensor: tensor (1, img_size, img_size, 3), pronto para o modelo.
 
-    Por padrão, usa tf.keras.applications.efficientnet.preprocess_input,
-    que é o que você utilizou no notebook de inferência.
+    Por padrão, usa tf.keras.applications.efficientnet.preprocess_input.
     """
     img_path = Path(img_path)
     if preprocess_fn is None:
@@ -125,10 +128,12 @@ def make_gradcam_heatmap(
     -------
     heatmap: np.ndarray, shape (H_feat, W_feat), com valores em [0, 1].
     """
+    # Decide qual camada convolucional usar
     if last_conv_layer_name is None:
         last_conv_layer = find_last_conv_layer(model)
     else:
-        last_conv_layer = model.get_layer(last_conv_layer_name)
+        # Busca recursiva: funciona mesmo se a camada estiver dentro de submodelo
+        last_conv_layer = _get_layer_recursive(model, last_conv_layer_name)
 
     # Modelo que mapeia input -> (feature maps da última conv, saída final)
     grad_model = tf.keras.models.Model(
@@ -220,7 +225,7 @@ def overlay_gradcam(
 
 
 # -----------------------------------------------------------------------------
-# 5. Pequeno helper para plotar resultado completo (opcional)
+# 5. Helper para plotar o resultado completo
 # -----------------------------------------------------------------------------
 def plot_gradcam_result(
     original_image: np.ndarray,
@@ -235,8 +240,6 @@ def plot_gradcam_result(
     - imagem original;
     - heatmap sozinho;
     - overlay Grad-CAM.
-
-    Útil para ser chamado diretamente no notebook.
     """
     plt.figure(figsize=(10, 3))
 
