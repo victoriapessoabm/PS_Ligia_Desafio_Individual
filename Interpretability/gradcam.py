@@ -16,9 +16,11 @@ def load_image_for_model(
     img_raw = tf.io.read_file(img_path)
     img = tf.image.decode_jpeg(img_raw, channels=3)
 
+    # redimensiona
     img_resized = tf.image.resize(img, target_size)
     original_image = tf.cast(tf.clip_by_value(img_resized, 0, 255), tf.uint8).numpy()
 
+    # prepara para o modelo
     img_float = tf.cast(img_resized, tf.float32)
     if preprocess_fn is not None:
         img_float = preprocess_fn(img_float)
@@ -29,8 +31,12 @@ def load_image_for_model(
     return original_image, input_tensor
 
 
-# Acha automaticamente a última camada com saída 4D (já olhando camadas aninhadas)
+# Acha automaticamente a última camada com saída 4D olhando a rede "achatada"
 def find_last_conv_layer_name(model: tf.keras.Model) -> str:
+    """
+    Percorre todas as camadas do grafo (incluindo submodelos) e devolve
+    o nome da última camada com saída 4D (HxWxC).
+    """
     last_name = None
     for layer in model._flatten_layers(include_self=False):
         try:
@@ -47,7 +53,7 @@ def find_last_conv_layer_name(model: tf.keras.Model) -> str:
     return last_name
 
 
-# Procura camada pelo nome usando o grafo “flattened”
+# Procura camada pelo nome no grafo achatado
 def _get_layer_by_name(model: tf.keras.Model, layer_name: str):
     for layer in model._flatten_layers(include_self=False):
         if layer.name == layer_name:
@@ -62,6 +68,10 @@ def compute_gradcam_heatmap(
     last_conv_layer_name: Optional[str] = None,
     class_index: Optional[int] = None,
 ) -> np.ndarray:
+    """
+    Calcula o heatmap Grad-CAM usando a última camada conv 4D do modelo
+    (ou uma camada específica, se last_conv_layer_name for fornecido).
+    """
     if last_conv_layer_name is None:
         last_conv_layer_name = find_last_conv_layer_name(model)
 
@@ -75,7 +85,7 @@ def compute_gradcam_heatmap(
     with tf.GradientTape() as tape:
         conv_outputs, preds = grad_model(input_tensor, training=False)
 
-        # binário ([..., 1]) → índice 0; caso multi-classe, usa argmax
+        # Para modelo binário ([..., 1]) uso índice 0; multi-classe → argmax
         if class_index is None:
             if preds.shape[-1] == 1:
                 class_index = 0
@@ -86,10 +96,9 @@ def compute_gradcam_heatmap(
         grads = tape.gradient(class_channel, conv_outputs)
 
     pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
-
     conv_outputs = conv_outputs[0]  # (H, W, C)
-    heatmap = tf.zeros(conv_outputs.shape[0:2], dtype=tf.float32)
 
+    heatmap = tf.zeros(conv_outputs.shape[0:2], dtype=tf.float32)
     for i in range(conv_outputs.shape[-1]):
         heatmap += pooled_grads[i] * conv_outputs[:, :, i]
 
@@ -136,6 +145,13 @@ def run_gradcam_on_image(
     class_index: Optional[int] = None,
     alpha: float = 0.4,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Pipeline completo:
+    - carrega a imagem
+    - pré-processa
+    - calcula o heatmap Grad-CAM
+    - gera o overlay sobre a imagem original
+    """
     original_image, input_tensor = load_image_for_model(
         img_path=img_path,
         target_size=target_size,
