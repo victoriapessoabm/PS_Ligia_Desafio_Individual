@@ -78,9 +78,9 @@ Após esses passos, toda a estrutura de dados necessária estará pronta para us
 
 📓 Notebooks Incluídos
 
-EDA.ipynb — análise exploratória dos dados e visualização das imagens.
-Modelagem.ipynb — construção dos modelos, avaliação, validação e escolha do modelo final.
-Inferencia.ipynb — inferência local, métricas finais e aplicação de interpretabilidade (Saliency e LIME).
+- EDA.ipynb — análise exploratória dos dados e visualização das imagens.
+- Modelagem.ipynb — construção dos modelos, avaliação, validação e escolha do modelo final.
+- Inferencia.ipynb — inferência local, métricas finais e aplicação de interpretabilidade (Saliency e LIME).
 
 ⚠️ Observação: o notebook Modelagem.ipynb não roda localmente devido ao alto custo computacional.
 Ele funciona como documentação completa do processo de treinamento e seleção do modelo.
@@ -122,11 +122,11 @@ Este modelo é utilizado tanto no notebook de inferência quanto no script de ge
    - Executar as células em sequência.
 
 📦 Geração da Submissão para o Kaggle
-   Para executar:
+   - Para executar:
     ```bash
       src/generateSubmission.py
     ```
-    Esse script:
+   - Esse script:
         - Localiza automaticamente a raiz do projeto;
         - Carrega BestModel/best_model.keras;
         - Lê data/ligia-compviz/test.csv;
@@ -139,10 +139,9 @@ Este modelo é utilizado tanto no notebook de inferência quanto no script de ge
 
 🔁 Portabilidade e Observações
 
-Não há caminhos absolutos no código;
-A raiz do projeto é identificada dinamicamente dentro dos notebooks e scripts;
-Todos os acessos a arquivos utilizam caminhos relativos à pasta do repositório;
-Mantendo a estrutura de diretórios e instalando as dependências, o projeto pode ser executado em qualquer ambiente compatível com Python 3.10.
+- Não há caminhos absolutos no código;
+- A raiz do projeto é identificada dinamicamente dentro dos notebooks e scripts;
+- Todos os acessos a arquivos utilizam caminhos relativos à pasta do repositório;
+- Mantendo a estrutura de diretórios e instalando as dependências, o projeto pode ser executado em qualquer ambiente compatível com Python 3.10.
 
-Este repositório documenta o ciclo completo da solução:
-EDA → preparação dos dados → modelagem → interpretabilidade → inferência → submissão.
+- Este repositório documenta o ciclo completo da solução: EDA → preparação dos dados → modelagem → interpretabilidade → inferência → submissão.
