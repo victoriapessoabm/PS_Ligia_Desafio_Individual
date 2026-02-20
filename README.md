@@ -136,6 +136,7 @@ Este modelo é utilizado tanto no notebook de inferência quanto no script de ge
                 ```bash
                   Submission/submission_membros.csv
                 ```
+
 🔁 Portabilidade e Observações
 
 Não há caminhos absolutos no código;
