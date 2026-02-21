@@ -123,10 +123,11 @@ Este modelo é utilizado tanto no notebook de inferência quanto no script de ge
 
 📦 Geração da Submissão para o Kaggle
    - Para executar:
-     
+    ```bash
+
+        python3 src/generateSubmission.py
     ```
-      src/generateSubmission.py
-    ```
+    
    - Esse script:
         - Localiza automaticamente a raiz do projeto;
         - Carrega BestModel/best_model.keras;
