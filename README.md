@@ -102,13 +102,15 @@ Após esses passos, toda a estrutura de dados necessária estará pronta para us
     ```
 3. Executar os notebooks localmente
 
-   - Abrir os notebooks em Notebooks/: EDA.ipynb e Inferencia.ipynb
-   - Selecionar o kernel Python 3.10 (ou o ambiente onde as dependências foram instaladas).
-   - Executar as células em sequência.
+   - Abrir os notebooks em Notebooks/EDA.ipynb e Notebooks/Inferencia.ipynb
+   - Clicar na primeira célula do primeiro notebook escolhido para rodar
+   - Selecionar o Python Enviroments e, sem seguida, selecionar o kernel Python 3.10 (ou o ambiente onde as dependências foram instaladas)
+   - Por fim, executar todas as outras células em sequência (Run All Cells)
 
 📦 Geração da Submissão para o Kaggle
-   - Para executar:
-
+   - Para executar, você deve executar o comando a partir da raiz do projeto, que é o diretório: PS_Ligia_Desafio_Individual/
+   - Na raiz, execute: 
+   
             python3 src/generateSubmission.py
     
    - Esse script:
@@ -155,7 +157,7 @@ Após esses passos, toda a estrutura de dados necessária estará pronta para us
         generateSubmission.py - Gera automaticamente Submission/submission_membros.csv usando o modelo final
     requirements.txt - lista de dependências do projeto
 
-📓 Notebooks Incluídos
+📓 Notebooks 
 
 - EDA.ipynb — análise exploratória dos dados e visualização das imagens.
 - Modelagem.ipynb — construção dos modelos, avaliação, validação e escolha do modelo final.
