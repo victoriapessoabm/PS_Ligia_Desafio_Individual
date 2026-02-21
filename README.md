@@ -27,6 +27,7 @@ Todo o projeto foi configurado para rodar localmente, usando apenas caminhos rel
                     └── chest_xray/
                          ├── train/
                          └── test/
+                    └── dataset.csv
 
 2. Dataset da competição não-rotulado (usado para criar submission_membros.csv) 
 - Dataset da Competição (submissão)
@@ -43,6 +44,7 @@ Todo o projeto foi configurado para rodar localmente, usando apenas caminhos rel
           PS_Ligia_Desafio_Individual/
               └── data/
                     ├── chest_xray/
+                    └── dataset.csv
                     └── ligia-compviz/
                          ├── train.csv      
                          ├── test.csv
