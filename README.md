@@ -12,12 +12,13 @@ Todo o projeto foi configurado para rodar localmente, usando apenas caminhos rel
 1. Dataset de Raios-X Rotulados (treino / validação / interpretação)
 
   1. Acessar o dataset no Kaggle:
-      Labeled Chest X-Ray Images: https://www.kaggle.com/datasets/tolgadincer/labeled-chest-xray-images
-  2. Clicar em Download (será baixado um arquivo archive.zip).
-  3. Descompactar o archive.zip.
-  4. Entrar na pasta archive/ que foi criada.
-  5. Dentro dela haverá a pasta chest_xray/.
-  6. Copiar a pasta chest_xray e colar dentro de data/ do repositório:
+      Labeled Chest X-Ray Images:
+      https://www.kaggle.com/datasets/tolgadincer/labeled-chest-xray-images
+  3. Clicar em Download (será baixado um arquivo archive.zip).
+  4. Descompactar o archive.zip.
+  5. Entrar na pasta archive/ que foi criada.
+  6. Dentro dela haverá a pasta chest_xray/.
+  7. Copiar a pasta chest_xray e colar dentro de data/ do repositório:
   
   Resultado esperado:
 
@@ -30,12 +31,13 @@ Todo o projeto foi configurado para rodar localmente, usando apenas caminhos rel
 2. Baixar e Organizar os Dados em data/
 
    1. Dataset da Competição (submissão)
-      Lígia – Computer Vision: https://www.kaggle.com/competitions/ligia-compviz/data
-   2. Clicar em Download All (lado direito inferior da tela): Será baixado o arquivo ligia-compviz.zip
-   3. Descompactar o ligia-compviz.zip
-   4. Descompactar o archive.zip
-   5. Uma pasta chamada ligia-compviz será criada
-   6. Copiar a pasta ligia-compviz e colar dentro de data/ do repositório:
+      Lígia – Computer Vision:
+      https://www.kaggle.com/competitions/ligia-compviz/data
+   3. Clicar em Download All (lado direito inferior da tela): Será baixado o arquivo ligia-compviz.zip
+   4. Descompactar o ligia-compviz.zip
+   5. Descompactar o archive.zip
+   6. Uma pasta chamada ligia-compviz será criada
+   7. Copiar a pasta ligia-compviz e colar dentro de data/ do repositório:
 
    Resultado esperado: 
 
