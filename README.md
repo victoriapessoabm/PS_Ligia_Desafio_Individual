@@ -46,8 +46,10 @@ Todo o projeto foi configurado para rodar localmente, usando apenas caminhos rel
                     ├── chest_xray/
                     └── dataset.csv
                     └── ligia-compviz/
-                         ├── train.csv      
-                         ├── test.csv
+                         ├── train.csv
+                         ├── test.csv   
+                         ├── train      
+                         ├── test
                               └── test_images/
                                    └── test_images/
    
@@ -79,26 +81,6 @@ Após esses passos, toda a estrutura de dados necessária estará pronta para us
     │   └── generateSubmission.py
     └── requirements.txt
 
-📓 Notebooks Incluídos
-
-- EDA.ipynb — análise exploratória dos dados e visualização das imagens.
-- Modelagem.ipynb — construção dos modelos, avaliação, validação e escolha do modelo final.
-- Inferencia.ipynb — inferência local, métricas finais e aplicação de interpretabilidade (Saliency e LIME).
-
-⚠️ Observação: o notebook Modelagem.ipynb não roda localmente devido ao alto custo computacional.
-Ele funciona como documentação completa do processo de treinamento e seleção do modelo.
-
-🤖 Modelo Utilizado
-
-- O modelo final escolhido foi: EfficientNetB0 com Data Augmentation e Fine-Tuning Parcial
-- Backbone pré-treinado no ImageNet;
-- Data augmentation leve (rotação, zoom, deslocamento, contraste);
-- Descongelamento parcial das camadas finais;
-- Otimização fina com learning rate reduzido;
-- O modelo final está salvo em: BestModel/best_model.keras
-
-Este modelo é utilizado tanto no notebook de inferência quanto no script de geração de submissão.
-
 🔧 Como Executar o Projeto Localmente
 
 1. Instalar Dependências
@@ -107,7 +89,7 @@ Este modelo é utilizado tanto no notebook de inferência quanto no script de ge
     ```bash
       pip install -r requirements.txt
     ```
-   Se houver mais de uma versão de Python instalada, usar explicitamente:
+   OBS: se houver mais de uma versão de Python instalada, usar explicitamente:
    ```bash
       python3.10 -m pip install -r requirements.txt
     ```
@@ -147,4 +129,48 @@ Este modelo é utilizado tanto no notebook de inferência quanto no script de ge
 - Todos os acessos a arquivos utilizam caminhos relativos à pasta do repositório;
 - Mantendo a estrutura de diretórios e instalando as dependências, o projeto pode ser executado em qualquer ambiente compatível com Python 3.10.
 
-- Este repositório documenta o ciclo completo da solução: EDA → preparação dos dados → modelagem → interpretabilidade → inferência → submissão.
+📄 Função de cada arquivo do repositório
+
+    BestModel/best_model.keras -> modelo final treinado (EfficientNetB0 com fine-tuning parcial), utilizado para todas as inferências e submissões.
+    data/
+        chest_xray/ — imagens rotuladas usadas para EDA e notebook de inferência
+        ligia-compviz/ — arquivos oficiais da competição (são utilizados para gerar arquivo de submissão: test.csv + imagens de teste)
+        dataset.csv – dataset tratado consolidando caminhos das imagens, rótulos e splits
+    ImagePreprocessing/
+        imagePipeline.py – métodos para o tratamento das imagens para prepará-las para os modelos
+        modelBuilder.py – uso dos métodos de imagePipeline.py para preparar dados para os modelos utilizados: baseline - CNN simples, EfficientNet;
+        preprocessing.py – preparação do dataset (limpeza, splits, ajuste de caminhos)
+        generate_csv.py – gera o dataset.csv a partir das pastas de imagens.
+    Interpretability/
+        saliency.py – Saliency Maps e visualização
+        lime.py – LIME para imagens e visualização
+    Notebooks/
+        EDA.ipynb – análise exploratória
+        Modelagem.ipynb – treinamento e avaliação dos modelos
+        Inferencia.ipynb – inferência local e interpretabilidade
+    Submission/
+        submission.csv - meu resultado de submissão para o Kaggle 
+        submission_membros.csv - resultado gerado ao rodar script generateSubmission.py
+    src/
+        generateSubmission.py - Gera automaticamente Submission/submission_membros.csv usando o modelo final
+    requirements.txt - lista de dependências do projeto
+
+📓 Notebooks Incluídos
+
+- EDA.ipynb — análise exploratória dos dados e visualização das imagens.
+- Modelagem.ipynb — construção dos modelos, avaliação, validação e escolha do modelo final.
+- Inferencia.ipynb — inferência local, métricas finais e aplicação de interpretabilidade (Saliency e LIME).
+
+⚠️ Observação: o notebook Modelagem.ipynb não roda localmente devido ao alto custo computacional.
+Ele funciona como documentação completa do processo de treinamento e seleção do modelo.
+
+🤖 Modelo Utilizado
+
+- O modelo final escolhido foi: EfficientNetB0 com Data Augmentation e Fine-Tuning Parcial
+- Backbone pré-treinado no ImageNet;
+- Data augmentation leve (rotação, zoom, deslocamento, contraste);
+- Descongelamento parcial das camadas finais;
+- Otimização fina com learning rate reduzido;
+- O modelo final está salvo em: BestModel/best_model.keras
+
+Este modelo é utilizado tanto no notebook de inferência quanto no script de geração de submissão.
