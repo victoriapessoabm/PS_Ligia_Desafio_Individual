@@ -125,8 +125,9 @@ Este modelo é utilizado tanto no notebook de inferência quanto no script de ge
    - Para executar:
     ```bash
 
-        python3 src/generateSubmission.py
+    python3 src/generateSubmission.py
     ```
+     
     
    - Esse script:
         - Localiza automaticamente a raiz do projeto;
