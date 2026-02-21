@@ -32,7 +32,7 @@ Todo o projeto foi configurado para rodar localmente, usando apenas caminhos rel
 2. Dataset da competição não-rotulado (usado para criar submission_membros.csv) 
 - Dataset da Competição (submissão)
       Lígia – Computer Vision:
-      https://www.kaggle.com/competitions/ligia-compviz/data
+      https://www.kaggle.com/competitions/ligia-compviz
 - Clicar em Download All (lado direito na parte inferior da tela): Será baixado o arquivo ligia-compviz.zip
 - Descompactar o ligia-compviz.zip
 - Descompactar o archive.zip
