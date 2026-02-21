@@ -186,3 +186,7 @@ Este modelo é utilizado tanto no notebook de inferência quanto no script de ge
 - O modelo final foi salvo em BestModel/best_model.keras e é utilizado tanto no notebook de inferência quanto no script de geração da submissão (generateSubmission.py)
 - A estrutura do projeto utiliza exclusivamente caminhos relativos, garantindo que todo o fluxo possa ser executado em qualquer máquina, desde que a organização das pastas seja mantida e as dependências sejam instaladas.
 - O notebook de Modelagem documenta todo o processo de treinamento, enquanto os notebooks de EDA e Inferência podem ser executados localmente. No Inferencia.ipynb estão incluídas também as etapas de interpretabilidade com Saliency e LIME, permitindo visualizar e analisar como o modelo final toma suas decisões.
+
+✨ Autoria
+Projeto desenvolvido por Victória Pessoa Barbosa Matos na segunda etapa do processo seletivo da Ligia (Liga de Inteligência Artificial do CIn - UFPE) 
+Desafio Lígia – Visão Computacional
