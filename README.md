@@ -11,7 +11,6 @@ Todo o projeto foi configurado para rodar localmente, usando apenas caminhos rel
 📥 Baixar e Organizar os Dados em data/
 
 1. Dataset de Raios-X Rotulados (treino / validação / interpretação/ inferência)
-
   - Acessar o dataset no Kaggle:
       Labeled Chest X-Ray Images:
       https://www.kaggle.com/datasets/tolgadincer/labeled-chest-xray-images
@@ -30,7 +29,6 @@ Todo o projeto foi configurado para rodar localmente, usando apenas caminhos rel
                          └── test/
 
 2. Dataset da competição não-rotulado (usado para criar submission_membros.csv) 
-
    - Dataset da Competição (submissão)
       Lígia – Computer Vision:
       https://www.kaggle.com/competitions/ligia-compviz/data
