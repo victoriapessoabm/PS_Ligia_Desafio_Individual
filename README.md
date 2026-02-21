@@ -9,16 +9,17 @@ Todo o projeto foi configurado para rodar localmente, usando apenas caminhos rel
     cd PS_Ligia_Desafio_Individual
 
 📥 Baixar e Organizar os Dados em data/
-1. Dataset de Raios-X Rotulados (treino / validação / interpretação)
 
-  1. Acessar o dataset no Kaggle:
+1. Dataset de Raios-X Rotulados (treino / validação / interpretação/ inferência)
+
+  - Acessar o dataset no Kaggle:
       Labeled Chest X-Ray Images:
       https://www.kaggle.com/datasets/tolgadincer/labeled-chest-xray-images
-  3. Clicar em Download (será baixado um arquivo archive.zip).
-  4. Descompactar o archive.zip.
-  5. Entrar na pasta archive/ que foi criada.
-  6. Dentro dela haverá a pasta chest_xray/.
-  7. Copiar a pasta chest_xray e colar dentro de data/ do repositório:
+  - Clicar em Download no canto superior direito (será baixado um arquivo archive.zip)
+  - Descompactar o archive.zip
+  - Entrar na pasta archive/ que foi criada
+  - Dentro dela haverá a pasta chest_xray/
+  - Copiar a pasta chest_xray e colar dentro de data/ do repositório:
   
   Resultado esperado:
 
@@ -28,16 +29,16 @@ Todo o projeto foi configurado para rodar localmente, usando apenas caminhos rel
                          ├── train/
                          └── test/
 
-2. Baixar e Organizar os Dados em data/
+2. Dataset da competição não-rotulado (usado para criar submission_membros.csv) 
 
-   1. Dataset da Competição (submissão)
+   - Dataset da Competição (submissão)
       Lígia – Computer Vision:
       https://www.kaggle.com/competitions/ligia-compviz/data
-   3. Clicar em Download All (lado direito inferior da tela): Será baixado o arquivo ligia-compviz.zip
-   4. Descompactar o ligia-compviz.zip
-   5. Descompactar o archive.zip
-   6. Uma pasta chamada ligia-compviz será criada
-   7. Copiar a pasta ligia-compviz e colar dentro de data/ do repositório:
+   - Clicar em Download All (lado direito na parte inferior da tela): Será baixado o arquivo ligia-compviz.zip
+   - Descompactar o ligia-compviz.zip
+   - Descompactar o archive.zip
+   - Uma pasta chamada ligia-compviz será criada
+   - Copiar a pasta ligia-compviz e colar dentro de data/ do repositório:
 
    Resultado esperado: 
 
@@ -130,9 +131,9 @@ Este modelo é utilizado tanto no notebook de inferência quanto no script de ge
     
    - Esse script:
         - Localiza automaticamente a raiz do projeto;
-        - Carrega BestModel/best_model.keras;
-        - Lê data/ligia-compviz/test.csv;
-        - Monta os caminhos das imagens em data/ligia-compviz/test_images/test_images/;
+        - Carrega BestModel/best_model.keras
+        - Lê data/ligia-compviz/test.csv
+        - Monta os caminhos das imagens em data/ligia-compviz/test_images/test_images/
         - Executa a inferência sobre todas as imagens de teste;
         - Salva o arquivo final em: 
 
