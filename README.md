@@ -11,14 +11,14 @@ Todo o projeto foi configurado para rodar localmente, usando apenas caminhos rel
 📥 Baixar e Organizar os Dados em data/
 
 1. Dataset de Raios-X Rotulados (treino / validação / interpretação/ inferência)
-  - Acessar o dataset no Kaggle:
+- Acessar o dataset no Kaggle:
       Labeled Chest X-Ray Images:
       https://www.kaggle.com/datasets/tolgadincer/labeled-chest-xray-images
-  - Clicar em Download no canto superior direito (será baixado um arquivo archive.zip)
-  - Descompactar o archive.zip
-  - Entrar na pasta archive/ que foi criada
-  - Dentro dela haverá a pasta chest_xray/
-  - Copiar a pasta chest_xray e colar dentro de data/ do repositório:
+- Clicar em Download no canto superior direito (será baixado um arquivo archive.zip)
+- Descompactar o archive.zip
+- Entrar na pasta archive/ que foi criada
+- Dentro dela haverá a pasta chest_xray/
+- Copiar a pasta chest_xray e colar dentro de data/ do repositório:
   
   Resultado esperado:
 
@@ -29,14 +29,14 @@ Todo o projeto foi configurado para rodar localmente, usando apenas caminhos rel
                          └── test/
 
 2. Dataset da competição não-rotulado (usado para criar submission_membros.csv) 
-   - Dataset da Competição (submissão)
+- Dataset da Competição (submissão)
       Lígia – Computer Vision:
       https://www.kaggle.com/competitions/ligia-compviz/data
-   - Clicar em Download All (lado direito na parte inferior da tela): Será baixado o arquivo ligia-compviz.zip
-   - Descompactar o ligia-compviz.zip
-   - Descompactar o archive.zip
-   - Uma pasta chamada ligia-compviz será criada
-   - Copiar a pasta ligia-compviz e colar dentro de data/ do repositório:
+- Clicar em Download All (lado direito na parte inferior da tela): Será baixado o arquivo ligia-compviz.zip
+- Descompactar o ligia-compviz.zip
+- Descompactar o archive.zip
+- Uma pasta chamada ligia-compviz será criada
+- Copiar a pasta ligia-compviz e colar dentro de data/ do repositório:
 
    Resultado esperado: 
 
