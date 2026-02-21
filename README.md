@@ -133,7 +133,9 @@ Após esses passos, toda a estrutura de dados necessária estará pronta para us
 
 📄 Função de cada arquivo do repositório
 
-    BestModel/best_model.keras -> modelo final treinado (EfficientNetB0 com fine-tuning parcial), utilizado para todas as inferências e submissões.
+    requirements.txt - lista de dependências do projeto
+    readme.md - instruções para execução do projeto
+    BestModel/best_model.keras - modelo final treinado (EfficientNetB0 com fine-tuning parcial) utilizado para inferência e para geração do arquivo de submissão
     data/
         chest_xray/ — imagens rotuladas usadas para EDA e notebook de inferência
         ligia-compviz/ — arquivos oficiais da competição (são utilizados para gerar arquivo de submissão: test.csv + imagens de teste)
@@ -155,7 +157,6 @@ Após esses passos, toda a estrutura de dados necessária estará pronta para us
         submission_membros.csv - resultado gerado ao rodar script generateSubmission.py
     src/
         generateSubmission.py - Gera automaticamente Submission/submission_membros.csv usando o modelo final
-    requirements.txt - lista de dependências do projeto
 
 📓 Notebooks 
 
