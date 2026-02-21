@@ -123,11 +123,8 @@ Este modelo é utilizado tanto no notebook de inferência quanto no script de ge
 
 📦 Geração da Submissão para o Kaggle
    - Para executar:
-    ```bash
 
     python3 src/generateSubmission.py
-    ```
-     
     
    - Esse script:
         - Localiza automaticamente a raiz do projeto;
@@ -136,9 +133,9 @@ Este modelo é utilizado tanto no notebook de inferência quanto no script de ge
         - Monta os caminhos das imagens em data/ligia-compviz/test_images/test_images/;
         - Executa a inferência sobre todas as imagens de teste;
         - Salva o arquivo final em: 
-                ```
-                  Submission/submission_membros.csv
-                ```
+
+                 Submission/submission_membros.csv
+                 
 
 🔁 Portabilidade e Observações
 
