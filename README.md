@@ -179,10 +179,10 @@ Este modelo é utilizado tanto no notebook de inferência quanto no script de ge
 
 🧾 Conclusão
 
-Três modelos foram testados ao longo do projeto: 
+- Três modelos foram testados ao longo do projeto: 
     - CNN simples (baseline) — serviu como ponto de partida, oferecendo uma referência inicial de desempenho.
     - EfficientNetB0 pré-treinado, sem augmentation e sem fine-tuning — apresentou melhora imediata em relação ao baseline devido ao uso de pesos pré-treinados.
     - EfficientNetB0 com Data Augmentation e Fine-Tuning Parcial (modelo final) — alcançou o melhor desempenho geral, combinando robustez, estabilidade e boa capacidade de generalização.
-O modelo final foi salvo em BestModel/best_model.keras e é utilizado tanto no notebook de inferência quanto no script de geração da submissão (generateSubmission.py)
-A estrutura do projeto utiliza exclusivamente caminhos relativos, garantindo que todo o fluxo possa ser executado em qualquer máquina, desde que a organização das pastas seja mantida e as dependências sejam instaladas.
-O notebook de Modelagem documenta todo o processo de treinamento, enquanto os notebooks de EDA e Inferência podem ser executados localmente. No Inferencia.ipynb estão incluídas também as etapas de interpretabilidade com Saliency e LIME, permitindo visualizar e analisar como o modelo final toma suas decisões.
+- O modelo final foi salvo em BestModel/best_model.keras e é utilizado tanto no notebook de inferência quanto no script de geração da submissão (generateSubmission.py)
+- A estrutura do projeto utiliza exclusivamente caminhos relativos, garantindo que todo o fluxo possa ser executado em qualquer máquina, desde que a organização das pastas seja mantida e as dependências sejam instaladas.
+- O notebook de Modelagem documenta todo o processo de treinamento, enquanto os notebooks de EDA e Inferência podem ser executados localmente. No Inferencia.ipynb estão incluídas também as etapas de interpretabilidade com Saliency e LIME, permitindo visualizar e analisar como o modelo final toma suas decisões.
