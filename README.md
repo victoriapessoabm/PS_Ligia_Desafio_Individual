@@ -93,14 +93,18 @@ Após esses passos, toda a estrutura de dados necessária estará pronta para us
    ```bash
       python3.10 -m pip install -r requirements.txt
     ```
+3. Instalar as extensões no VS Code
+
+   - Jupyter (Microsoft)
+   - Python (Microsoft)
    
-2. Abrir o Projeto
+3. Abrir o Projeto
 
     ```bash
       cd PS_Ligia_Desafio_Individual
       code .
     ```
-3. Executar os notebooks localmente
+4. Executar os notebooks localmente
 
    - Abrir os notebooks em Notebooks/EDA.ipynb e Notebooks/Inferencia.ipynb
    - Clicar na primeira célula do primeiro notebook escolhido para rodar
