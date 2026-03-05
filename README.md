@@ -80,6 +80,7 @@ Após esses passos, toda a estrutura de dados necessária estará pronta para us
     ├── src/
     │   └── generateSubmission.py
     └── requirements.txt
+    └── .gitignore
 
 🔧 Como Executar o Projeto Localmente
 
